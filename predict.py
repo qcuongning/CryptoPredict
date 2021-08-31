@@ -94,8 +94,6 @@ if __name__ == '__main__':
     endpoint = 'https://min-api.cryptocompare.com/data/v2/histohour'
     res = requests.get(endpoint + '?fsym={}&tsym=USD&limit=1000'.format(token))
     hist = pd.DataFrame(json.loads(res.content)['Data']['Data'])
-    
-    hist['time']
     hist = hist.set_index('time')
     hist.index = pd.to_datetime(hist.index, unit='s')
     target_col = 'close'
@@ -103,7 +101,7 @@ if __name__ == '__main__':
     hist.drop(["conversionType", "conversionSymbol"],
               axis='columns', inplace=True)
 
-    print(hist.tail(1))
+    
               
     np.random.seed(42)
     window_len = 5
@@ -127,7 +125,17 @@ if __name__ == '__main__':
 
     targets = test[target_col][window_len:]
     preds = model.predict(X_test).squeeze()
+    train_data, test_data = train_test_split(hist, test_size=test_size)
+    X_test = extract_window_data(test_data, window_len, zero_base= False)
     mean_absolute_error(y_test, preds)
     binary_pred, binary_test = cvtToBinaryOption(y_test, preds)
+    if binary_pred[-1]== 1:
+        trend = 'up'
+    else:
+        trend = 'down'
+    print('-------------------------------------')
+    print('Data about {} most recently: \n'.format(token),hist.tail(2))
+    print('Du doan trong khoang tu {} den 1 tieng tiep theo {} se {}'.format(hist.index[-1], token, trend))
     acc = accuracy_score(binary_test, binary_pred)
     print('Do chinh xac trong 100 mau gan day cua Token {}: {:.2f}%'.format(token, acc*100))
+    
