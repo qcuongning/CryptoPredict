@@ -95,6 +95,7 @@ if __name__ == '__main__':
     res = requests.get(endpoint + '?fsym={}&tsym=USD&limit=1000'.format(token))
     hist = pd.DataFrame(json.loads(res.content)['Data']['Data'])
     hist = hist.set_index('time')
+    hist.index += 3600*7
     hist.index = pd.to_datetime(hist.index, unit='s')
     target_col = 'close'
 
@@ -134,8 +135,9 @@ if __name__ == '__main__':
     else:
         trend = 'down'
     print('-------------------------------------')
-    print('Data about {} most recently: \n'.format(token),hist.tail(2))
+    print('Data about {} most recently: \n'.format(token),hist.tail(5))
     print('Du doan trong khoang tu {} den 1 tieng tiep theo {} se {}'.format(hist.index[-1], token, trend))
     acc = accuracy_score(binary_test, binary_pred)
     print('Do chinh xac trong 100 mau gan day cua Token {}: {:.2f}%'.format(token, acc*100))
-    
+    print(binary_pred [ -5:])
+    print(binary_test [ -5:])
