@@ -54,8 +54,8 @@ def prepare_data(df, target_col, window_len=10, zero_base=True, test_size=0.2):
     y_train = train_data[target_col][window_len:].values
     y_test = test_data[target_col][window_len:].values
     if zero_base:
-        y_train = y_train / train_data[target_col][:-window_len].values - 1
-        y_test = y_test / test_data[target_col][:-window_len].values - 1
+        y_train = y_train / train_data[target_col][window_len-1:-1].values - 1
+        y_test = y_test / test_data[target_col][window_len-1:-1].values - 1
 
     return train_data, test_data, X_train, X_test, y_train, y_test
 
@@ -98,15 +98,13 @@ if __name__ == '__main__':
     hist.index += 3600*7
     hist.index = pd.to_datetime(hist.index, unit='s')
     target_col = 'close'
-
     hist.drop(["conversionType", "conversionSymbol"],
               axis='columns', inplace=True)
-
     
               
     np.random.seed(42)
-    window_len = 5
-    test_size = 0.2
+    window_len = 20
+    test_size = 0.1
     zero_base = True
     lstm_neurons = 100
     epochs = 20
@@ -126,18 +124,21 @@ if __name__ == '__main__':
 
     targets = test[target_col][window_len:]
     preds = model.predict(X_test).squeeze()
-    train_data, test_data = train_test_split(hist, test_size=test_size)
-    X_test = extract_window_data(test_data, window_len, zero_base= False)
-    mean_absolute_error(y_test, preds)
-    binary_pred, binary_test = cvtToBinaryOption(y_test, preds)
+    # binary_pred, binary_test = cvtToBinaryOption(y_test, preds)
+    binary_test = (y_test > 0) *1
+    binary_pred = (preds > 0) *1
     if binary_pred[-1]== 1:
         trend = 'up'
     else:
         trend = 'down'
     print('-------------------------------------')
+    hist.drop(["volumeto"],
+              axis='columns', inplace=True)
+    trend_coin = (hist['close'] > hist['open']) * 1
+    hist['Trend'] = trend_coin
     print('Data about {} most recently: \n'.format(token),hist.tail(5))
     print('Du doan trong khoang tu {} den 1 tieng tiep theo {} se {}'.format(hist.index[-1], token, trend))
     acc = accuracy_score(binary_test, binary_pred)
     print('Do chinh xac trong 100 mau gan day cua Token {}: {:.2f}%'.format(token, acc*100))
-    print(binary_pred [ -5:])
-    print(binary_test [ -5:])
+    print(binary_pred [ -10:])
+    print(binary_test[-10:])
